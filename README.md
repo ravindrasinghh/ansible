@@ -11,5 +11,6 @@ server IP
 ```
 
 ```sh
+#Run command
 ansible-playook playbookname.yml -i host.ini
 ```
