@@ -54,6 +54,3 @@
       service: 
         name: jenkins
         state: restart
-
-
-
