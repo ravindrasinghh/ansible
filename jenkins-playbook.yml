@@ -2,45 +2,42 @@
 - hosts: all
   become: yes
   tasks:
-  - name: download PYTHON
-    yum:
+  - name: Update all packages to the latest version
+    apt:
+      upgrade: dist
+  - name: Upgrade all packages to the latest version
+    apt:
+      name: "*"
+      state: latest  
+  - name: Download python
+    apt:
       name: python
       state: present
-  - name: install aws cli
-    yum:  
-      name: awscli
-      state: present
   - name: install wget
-    yum:
+    apt:
       name: wget
       state: present
-
   - name: install openjdk
-    yum:
-      name: java-1.8.0-openjdk
+    become: yes
+    apt:
+      name: openjdk-8-jdk
       state: present
 
-  - name: Download jenkins.repo
-    get_url:
-     url: http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo
-     dest: /etc/yum.repos.d/jenkins.repo
+  - name: Installing Key
+    shell: wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo apt-key add -
 
-  - name: Import Jenkins Key
-    rpm_key:
-     state: present
-     key: https://jenkins-ci.org/redhat/jenkins-ci.org.key
+  - name: Add the Jenkins repository to the system
+    become: yes
+    shell: sh -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'       
 
-  - name: Install Jenkins
-    yum:
-     name: jenkins
-     state: present
+  - name: Updating apt-get cache again
+    apt: 
+      update_cache: yes
 
-  - name: Start & Enable Jenkins
-    systemd:
-     name: jenkins
-     state: started
-     enabled: true
-
+  - name: Installing Jenkins Only
+    apt:
+      name: jenkins
+      state: present 
   - name: Sleep for 30 seconds and continue with play
     wait_for: timeout=30
 
@@ -48,7 +45,15 @@
     shell: cat /var/lib/jenkins/secrets/initialAdminPassword
     changed_when: false
     register: result
+  
+  - debug:
+     msg: var=result    
+    
+  handlers:
+    - name: restart
+      service: 
+        name: jenkins
+        state: restart
 
-  - name: Print init password Jenkins
-    debug:
-     var: result.stdout
+
+
