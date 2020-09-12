@@ -1,27 +1,19 @@
 ---
 - hosts: all
   become: yes
+  vars:
+      package_list:
+      - 'python'
+      - 'wget'
+      - 'openjdk-8-jdk'
   tasks:
   - name: Update all packages to the latest version
-    apt:
-      upgrade: dist
-  - name: Upgrade all packages to the latest version
-    apt:
-      name: "*"
-      state: latest  
-  - name: Download python
-    apt:
-      name: python
-      state: present
-  - name: install wget
-    apt:
-      name: wget
-      state: present
-  - name: install openjdk
-    become: yes
-    apt:
-      name: openjdk-8-jdk
-      state: present
+    shell: sudo apt update
+
+  - name: Update all packages to the latest version
+    package:
+        name: "{{ package_list }}" 
+        state: present  
 
   - name: Installing Key
     shell: wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | sudo apt-key add -
@@ -38,6 +30,7 @@
     apt:
       name: jenkins
       state: present 
+
   - name: Sleep for 30 seconds and continue with play
     wait_for: timeout=30
 
@@ -47,7 +40,7 @@
     register: result
   
   - debug:
-     msg: var=result    
+     var: result.stdout    
     
   handlers:
     - name: restart
